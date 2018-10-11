@@ -1,0 +1,84 @@
+The WebApplicationInitializer class that we’ve seen earlier is a general-purpose interface. It turns out that Spring provides a few more specific implementations, including an abstract class called AbstractContextLoaderInitializer.
+
+Its job, as the name implies, is to create a ContextLoaderListener and register it with the servlet container.
+
+We only have to tell it how to build the root context:
+
+public class AnnotationsBasedApplicationInitializer 
+  extends AbstractContextLoaderInitializer {
+  
+    @Override
+    protected WebApplicationContext createRootApplicationContext() {
+        AnnotationConfigWebApplicationContext rootContext
+          = new AnnotationConfigWebApplicationContext();
+        rootContext.register(RootApplicationConfig.class);
+        return rootContext;
+    }
+}
+Here we can see that we no longer need to register the ContextLoaderListener, which saves us from a little bit of boilerplate code.
+
+Note also the use of the register method that is specific to AnnotationConfigWebApplicationContext instead of the more generic setConfigLocations: by invoking it, we can register individual @Configuration annotated classes with the context, thus avoiding package scanning.
+
+
+DispatcherServlet is typically declared in web.xml with a name and a mapping:
+
+
+<servlet>
+    <servlet-name>normal-webapp</servlet-name>
+    <servlet-class>
+        org.springframework.web.servlet.DispatcherServlet
+    </servlet-class>
+    <load-on-startup>1</load-on-startup>
+</servlet>
+<servlet-mapping>
+    <servlet-name>normal-webapp</servlet-name>
+    <url-pattern>/api/*</url-pattern>
+</servlet-mapping>
+If not otherwise specified, the name of the servlet is used to determine the XML file to load. In our example, we’ll use the file WEB-INF/normal-webapp-servlet.xml.
+
+We can also specify one or more paths to XML files, in a similar fashion to ContextLoaderListener:
+
+<servlet>
+    ...
+    <init-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>/WEB-INF/normal/*.xml</param-value>
+    </init-param>
+</servlet>
+3.2. Using web.xml and a Java Application Context
+When we want to use a different type of context we proceed like with ContextLoaderListener, again. That is, we specify a contextClass parameter along with a suitable contextConfigLocation:
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+<servlet>
+    <servlet-name>normal-webapp-annotations</servlet-name>
+    <servlet-class>
+        org.springframework.web.servlet.DispatcherServlet
+    </servlet-class>
+    <init-param>
+        <param-name>contextClass</param-name>
+        <param-value>
+            org.springframework.web.context.support.AnnotationConfigWebApplicationContext
+        </param-value>
+    </init-param>
+    <init-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>com.baeldung.contexts.config.NormalWebAppConfig</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+</servlet>
